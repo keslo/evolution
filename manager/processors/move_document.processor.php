@@ -14,6 +14,9 @@ if($documentID==$newParentID) $modx->webAlertAndQuit($_lang["error_movedocument1
 if($documentID <= 0) $modx->webAlertAndQuit($_lang["error_movedocument2"]);
 if($newParentID < 0) $modx->webAlertAndQuit($_lang["error_movedocument2"]);
 
+$parents = $modx->getParentIds($newParentID);
+if (in_array($documentID, $parents))  $modx->webAlertAndQuit($_lang["error_movedocument2"]);
+
 $rs = $modx->db->select('parent', $modx->getFullTableName('site_content'), "id='{$documentID}'");
 $oldparent = $modx->db->getValue($rs);
 
@@ -94,7 +97,7 @@ if (!array_search($newParentID, $children)) {
 	// empty cache & sync site
 	$modx->clearCache('full');
 
-	$header="Location: index.php?a=3&id={$documentID}&r=1";
+	$header="Location: index.php?a=3&id={$documentID}&r=9";
 	header($header);
 } else {
 	$modx->webAlertAndQuit("You cannot move a document to a child document!");

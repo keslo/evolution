@@ -1,7 +1,4 @@
 <?php
-if (!defined('MODX_BASE_PATH')) {
-    die('HACK???');
-}
 /**
  * DocLister class
  *
@@ -167,11 +164,13 @@ abstract class DocLister
 
     /** @var string Имя таблицы */
     protected $table = '';
+    /** @var string alias таблицы */
+    protected $alias = '';
 
     /** @var null|paginate_DL_Extender */
     protected $extPaginate = null;
 
-    /** @var null|Helpers\Config  */
+    /** @var null|Helpers\Config */
     public $config = null;
 
     /**
@@ -237,8 +236,11 @@ abstract class DocLister
                     break;
             }
             $this->config->setConfig($cfg);
+            $this->alias = empty($this->alias) ? $this->getCFGDef('tableAlias',
+                'c') : $this->alias;
+            $this->table = $this->getTable(empty($this->table) ? $this->getCFGDef('table',
+                'site_content') : $this->table, $this->alias);
 
-            $this->table = $this->getTable(empty($this->table) ? $this->getCFGDef('table', 'site_content') : $this->table);
             $this->idField = $this->getCFGDef('idField', 'id');
             $this->parentField = $this->getCFGDef('parentField', 'parent');
 
@@ -273,6 +275,10 @@ abstract class DocLister
         for ($i = 0; $i <= $strlen; $i++) {
             $e = mb_substr($str, $i, 1, 'UTF-8');
             switch ($e) {
+                case '\\':
+                    $cur .= $e;
+                    $cur .= mb_substr($str, ++$i, 1, 'UTF-8');
+                    break;
                 case ')':
                     $open--;
                     if ($open == 0) {
@@ -581,7 +587,9 @@ abstract class DocLister
             $out = $this->_render($tpl);
         }
 
-        if ($out) $this->outData = DLTemplate::getInstance($this->modx)->parseDocumentSource($out);
+        if ($out) {
+            $this->outData = DLTemplate::getInstance($this->modx)->parseDocumentSource($out);
+        }
         $this->debug->debugEnd('render');
 
         return $this->outData;
@@ -919,9 +927,13 @@ abstract class DocLister
             2, array('html', null)
         );
         $DLTemplate = DLTemplate::getInstance($this->getMODX());
-        if ($path = $this->getCFGDef('templatePath')) $DLTemplate->setTemplatePath($path);
-        if ($ext = $this->getCFGDef('templateExtension')) $DLTemplate->setTemplateExtension($ext);
-        $DLTemplate->setTwigTemplateVars(array('DocLister'=>$this));
+        if ($path = $this->getCFGDef('templatePath')) {
+            $DLTemplate->setTemplatePath($path);
+        }
+        if ($ext = $this->getCFGDef('templateExtension')) {
+            $DLTemplate->setTemplateExtension($ext);
+        }
+        $DLTemplate->setTwigTemplateVars(array('DocLister' => $this));
         $out = $DLTemplate->parseChunk($name, $data, $parseDocumentSource);
         $out = $this->parseLang($out);
         if (empty($out)) {
@@ -1015,10 +1027,23 @@ abstract class DocLister
 
         $this->renderTPL = $this->getCFGDef('tplId' . $i, $this->renderTPL);
         $this->renderTPL = $this->getCFGDef('tpl' . $iterationName, $this->renderTPL);
+        $iteration = $i;
+
+        if ($this->extPaginate) {
+            $offset = $this->getCFGDef('reversePagination',
+                0) && $this->extPaginate->currentPage() > 1 ? $this->extPaginate->totalPage() * $this->getCFGDef('display',
+                    0) - $this->extPaginate->totalDocs() : 0;
+            if ($this->getCFGDef('maxDocs', 0) && !$this->getCFGDef('reversePagination',
+                    0) && $this->extPaginate->currentPage() == $this->extPaginate->totalPage()
+            ) {
+                $iteration += $this->getCFGDef('display', 0);
+            }
+            $iteration += $this->getCFGDef('display',
+                    0) * ($this->extPaginate->currentPage() - 1) - $offset;
+        }
 
         $data[$this->getCFGDef("sysKey",
-            "dl") . '.full_iteration'] = ($this->extPaginate) ? ($i + $this->getCFGDef('display',
-                0) * ($this->extPaginate->currentPage() - 1)) : $i;
+            "dl") . '.full_iteration'] = $iteration;
 
         if ($i == 1) {
             $this->renderTPL = $this->getCFGDef('tplFirst', $this->renderTPL);
@@ -1088,13 +1113,13 @@ abstract class DocLister
 
             $return['rows'] = array();
             foreach ($out as $key => $item) {
-                $return['rows'][] = APIHelpers::getkey($item, $key, $item);
+                $return['rows'][] = $item;
             }
             $return['total'] = $this->getChildrenCount();
-        }elseif ('simple' == $this->getCFGDef('JSONformat', 'old')) {
+        } elseif ('simple' == $this->getCFGDef('JSONformat', 'old')) {
             $return = array();
             foreach ($out as $key => $item) {
-                $return[] = APIHelpers::getkey($item, $key, $item);
+                $return[] = $item;
             }
         } else {
             $return = $out;
@@ -1418,6 +1443,10 @@ abstract class DocLister
         if ($limit == 0) {
             $limit = $this->getCFGDef('display', 0);
         }
+        $maxDocs = $this->getCFGDef('maxDocs', 0);
+        if ($maxDocs > 0 && $limit > $maxDocs) {
+            $limit = $maxDocs;
+        }
         if ($offset == 0) {
             $offset = $this->getCFGDef('offset', 0);
         }
@@ -1506,22 +1535,39 @@ abstract class DocLister
     /**
      * Получение PrimaryKey основной таблицы.
      * По умолчанию это id. Переопределить можно в контроллере присвоив другое значение переменной idField
-     *
+     * @param bool $full если true то возвращается значение для подстановки в запрос
      * @return string PrimaryKey основной таблицы
      */
-    public function getPK()
+    public function getPK($full = true)
     {
-        return isset($this->idField) ? $this->idField : 'id';
+        $idField = isset($this->idField) ? $this->idField: 'id';
+        if ($full) {
+            $idField = '`' . $idField . '`';
+            if (!empty($this->alias)) {
+                $idField = '`' . $this->alias . '`.' . $idField;
+            }
+        }
+
+        return $idField;
     }
 
     /**
      * Получение Parent key
      * По умолчанию это parent. Переопределить можно в контроллере присвоив другое значение переменной parentField
+     * @param bool $full если true то возвращается значение для подстановки в запрос
      * @return string Parent Key основной таблицы
      */
-    public function getParentField()
+    public function getParentField($full = true)
     {
-        return isset($this->parentField) ? $this->parentField : '';
+        $parentField = isset($this->parentField) ? $this->parentField : '';
+        if ($full && !empty($parentField)) {
+            $parentField = '`' . $parentField . '`';
+            if (!empty($this->alias)) {
+                $parentField = '`' . $this->alias . '`.' . $parentField;
+            }
+        }
+
+        return $parentField;
     }
 
     /**
@@ -1571,7 +1617,7 @@ abstract class DocLister
                 $output = false;
             } else {
                 $output['join'] = $filter->get_join();
-                $output['where'] = $filter->get_where();
+                $output['where'] = stripslashes($filter->get_where());
             }
         }
         $this->debug->debug('getFilter');
@@ -1593,6 +1639,22 @@ abstract class DocLister
     public function filtersJoin()
     {
         return APIHelpers::getkey($this->_filters, 'join', '');
+    }
+
+    /**
+     * @param string $join
+     * @return $this
+     */
+    public function setFiltersJoin($join = '') {
+        if (!empty($join)) {
+            if (!empty($this->_filters['join'])) {
+                $this->_filters['join'] .= ' ' . $join;
+            } else {
+                $this->_filters['join'] = $join;
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -1637,23 +1699,29 @@ abstract class DocLister
         $out = false;
         $fltr_params = explode(':', $filter, 2);
         $fltr = APIHelpers::getkey($fltr_params, 0, null);
+        /**
+        * @var tv_DL_filter|content_DL_filter $fltr_class
+        */
+        $fltr_class = $fltr . '_DL_filter';
         // check if the filter is implemented
-        if (!is_null($fltr) && file_exists(dirname(__FILE__) . '/filter/' . $fltr . '.filter.php')) {
-            require_once dirname(__FILE__) . '/filter/' . $fltr . '.filter.php';
-            /**
-             * @var tv_DL_filter|content_DL_filter $fltr_class
-             */
-            $fltr_class = $fltr . '_DL_filter';
-            $this->totalFilters++;
-            $fltr_obj = new $fltr_class();
-            if ($fltr_obj->init($this, $filter)) {
-                $out = $fltr_obj;
-            } else {
-                $this->debug->error("Wrong filter parameter: '{$this->debug->dumpData($filter)}'", 'Filter');
+        if (!is_null($fltr)) {
+            if (!class_exists($fltr_class) && file_exists(__DIR__ . '/filter/' . $fltr . '.filter.php')) {
+                require_once dirname(__FILE__) . '/filter/' . $fltr . '.filter.php';
             }
-        } else {
+            if (class_exists($fltr_class)) {
+                $this->totalFilters++;
+                $fltr_obj = new $fltr_class();
+                if ($fltr_obj->init($this, $filter)) {
+                    $out = $fltr_obj;
+                } else {
+                    $this->debug->error("Wrong filter parameter: '{$this->debug->dumpData($filter)}'", 'Filter');
+                }
+            }
+        }
+        if (!$out) {
             $this->debug->error("Error load Filter: '{$this->debug->dumpData($filter)}'", 'Filter');
         }
+            
         $this->debug->debugEnd("loadFilter");
 
         return $out;

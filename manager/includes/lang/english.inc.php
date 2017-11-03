@@ -17,7 +17,7 @@ $modx_lang_attribute = 'en'; // Manager HTML/XML Language Attribute see http://e
 $modx_manager_charset = 'UTF-8';
 
 $_lang["about_msg"] = 'EVO is a <a href="http://evo.im/" target="_blank">PHP Application Framework and Content Management System</a> licensed under the <a href="../assets/docs/license.txt">GNU GPL</a>.';
-$_lang["about_title"] = 'About EVO';
+$_lang["about_title"] = 'About Evolution';
 $_lang["access_permission_denied"] = 'You do not have the correct permissions for this Resource.';
 $_lang["access_permission_parent_denied"] = 'You do not have permission to create or move a Resource here! Please choose another location.';
 $_lang["access_permissions"] = 'Access permissions';
@@ -97,7 +97,7 @@ $_lang["cfg_site_url"] = 'MODX_SITE_URL';
 $_lang["change_name"] = 'Change name';
 $_lang["change_password"] = 'Change Password';
 $_lang["change_password_confirm"] = 'Confirm password';
-$_lang["change_password_message"] = 'Please enter your new password, and then enter it again to confirm. Your password needs to be between 6 and 15 characters long.';
+$_lang["change_password_message"] = 'Please enter your new password, and then enter it again to confirm. Your password needs to be at least 6 characters long.';
 $_lang["change_password_new"] = 'New password';
 $_lang["charset_message"] = 'Select the default character encoding for the [(modx_charset)] system variable. This does not affect the Manager.';
 $_lang["charset_title"] = 'Character encoding';
@@ -126,6 +126,8 @@ $_lang["configcheck_errorpage_unavailable"] = 'Your site\'s Error page is not av
 $_lang["configcheck_errorpage_unavailable_msg"] = 'This means that your Error page is not accessible to normal web surfers or does not exist. This can lead to a recursive looping condition and many errors in your site logs. Make sure there are no Webuser Groups assigned to the page.';
 $_lang["configcheck_errorpage_unpublished"] = 'Your site\'s Error page is not published or does not exist.';
 $_lang["configcheck_errorpage_unpublished_msg"] = 'This means that your Error page is inaccessible to the general public. Publish the page or make sure it is assigned to an existing Resource in your Site Tree in the Tools &gt; Configuration menu.';
+$_lang["configcheck_filemanager_path"] = 'The currently set <u>File Manager path</u> seems incorrect.';
+$_lang["configcheck_filemanager_path_msg"] = 'This can happen for example by moving your installation to a different directory or server. Please check and update your Evo system configuration.';
 $_lang["configcheck_hide_warning"] = '<a href="javascript:hideConfigCheckWarning(\'%s\');"><em>Don\'t show this again.</em></a>';
 $_lang["configcheck_images"] = 'Images directory not writable';
 $_lang["configcheck_images_msg"] = 'The images directory isn\'t writable, or doesn\'t exist. This means the Image Manager functions in the editor will not work!';
@@ -137,6 +139,8 @@ $_lang["configcheck_notok"] = 'One or more configuration details didn\'t check o
 $_lang["configcheck_ok"] = 'Check passed OK - no warnings to report.';
 $_lang["configcheck_php_gdzip"] = 'GD and/or Zip PHP extensions not found';
 $_lang["configcheck_php_gdzip_msg"] = 'EVO needs the GD and Zip extension enabled for PHP. While EVO will work without them, you will not be able to take full advantage of the built-in File Manager, Image Editor or Captcha for logins.';
+$_lang["configcheck_rb_base_dir"] = 'The currently set <u>File base path</u> seems incorrect.';
+$_lang["configcheck_rb_base_dir_msg"] = 'This can happen for example by moving your installation to a different directory or server. Please check and update your Evo system configuration.';
 $_lang["configcheck_register_globals"] = 'register_globals is set to ON in your php.ini configuration file';
 $_lang["configcheck_register_globals_msg"] = 'This configuration makes your site much more susceptible to Cross Site Scripting (XSS) attacks. You should speak to your host about what you can do to disable this setting.';
 $_lang["configcheck_title"] = 'Configuration check';
@@ -383,6 +387,7 @@ $_lang["friendlyurlsuffix_title"] = 'Friendly URL Suffix';
 $_lang["functionnotimpl"] = 'Sorry!';
 $_lang["functionnotimpl_message"] = 'This function has not been implemented yet.';
 $_lang["further_info"] = 'Further information';
+$_lang["global_tabs"] = 'Global Tabs';
 $_lang["go"] = 'Go';
 $_lang["group_access_permissions"] = 'User group access';
 $_lang['group_tvs'] = 'Group TV';
@@ -631,6 +636,7 @@ $_lang["onlineusers_title"] = 'Online users';
 $_lang["onlineusers_user"] = 'User';
 $_lang["onlineusers_userid"] = 'User\'s ID';
 $_lang["optimize_table"] = 'Click here to optimize this table';
+$_lang["page_data_alias"] = 'Alias';
 $_lang["page_data_cacheable"] = 'Cacheable';
 $_lang["page_data_cacheable_help"] = 'This allows the Resource to be saved to the site cache, and affects all Snippets on the page.';
 $_lang["page_data_cached"] = '<b>Source retrieved from cache:</b>';
@@ -937,6 +943,11 @@ $_lang["settings_KC"] = 'File Browser';
 $_lang["settings_page_settings"] = 'Settings';
 $_lang["settings_photo"] = 'Photo';
 $_lang["settings_properties"] = 'Properties';
+$_lang["show_fullscreen_btn_message"] = 'Show Menu toggle Fullscreen button';
+$_lang["show_newresource_btn_message"] = 'Show Menu New Resource button';
+$_lang["settings_show_picker_message"] = 'Customize manager theme and save to localstorage';
+$_lang["show_fullscreen_btn"] = 'Toggle Fullscreen button';
+$_lang["show_newresource_btn"] = 'New Resource button';
 $_lang["settings_site"] = 'Site';
 $_lang["settings_strip_image_paths_message"] = 'If this is set to \'No\', EVO  will write file browser src\'s (images, files, flash, etc.) as absolute URLs. Relative URLs are helpful should you wish to move your EVO install, e.g., from a staging site to a production site. If you have no idea what this means, it\'s best just to leave it set to \'Yes\'.';
 $_lang["settings_strip_image_paths_title"] = 'Rewrite browser paths?';
@@ -947,6 +958,7 @@ $_lang["settings_users"] = 'User';
 $_lang["show_meta"] = 'Show META Keywords tab';
 $_lang["show_meta_message"] = 'Show the deprecated META Keywords tab when editing Resources in the Manager.';
 $_lang["show_tree"] = 'Show Site Tree';
+$_lang["show_picker"] = 'Show Color Switcher';
 $_lang["showing"] = 'Showing';
 $_lang["signupemail_message"] = 'Set the email message sent to users when creating accounts including their username and password.<br /><b>Note:</b> The following Placeholders are replaced by the Content Manager when the message is sent: <br /><br />[+sname+] - Name of your web site, <br />[+saddr+] - Your web site email address, <br />[+surl+] - Your site url, <br />[+uid+] - User\'s Login name or id, <br />[+pwd+] - User\'s password, <br />[+ufn+] - User\'s full name. <br /><br /><b>Leave the [+uid+] and [+pwd+] in the e-mail, or else the username and password won\'t be sent in the mail and your users won\'t know their username or password!</b>';
 $_lang["signupemail_title"] = 'Signup e-mail';
@@ -992,7 +1004,7 @@ $_lang["sysinfo_activity_message"] = 'This list show which Resources have been r
 $_lang["sysinfo_userid"] = 'User';
 $_lang["system_email_signup"] = '<!doctype html>
 <html>
-Hello [+uid+] 
+Hello [+uid+]
 
 Here are your login details for [+sname+] Content Manager:
 
@@ -1081,8 +1093,8 @@ $_lang["tools"] = 'Tools';
 $_lang["top_howmany_message"] = 'When viewing reports, how large should the \'Top ...\' lists be?';
 $_lang["top_howmany_title"] = 'Top how many';
 $_lang["total"] = 'total';
-$_lang["track_visitors_message"] = 'Provides a hook for analytics Plugins, for example to flag whether or not visits to a specific Resource are logged.';
-$_lang["track_visitors_title"] = 'Enable Stats Tracking';
+$_lang["track_visitors_message"] = 'Check to show the child resources in the document tree';
+$_lang["track_visitors_title"] = 'Show child resources';
 $_lang["tree_page_click"] = 'Page Click Behavior';
 $_lang["tree_page_click_message"] = 'The default behavior when clicking on a page in the site tree.';
 $_lang["use_breadcrumbs"] = 'Show navigation';
@@ -1124,6 +1136,7 @@ $_lang["use_alias_path_message"] = 'Enabling this option generates a virtual pat
 $_lang["use_alias_path_title"] = 'Use Friendly URL alias path';
 $_lang["use_editor_message"] = 'Enable editing with a Rich Text Editor (RTE). This setting applies to all Resources, but can be overridden in the User settings.';
 $_lang["use_editor_title"] = 'Enable editor';
+$_lang["use_global_tabs"] = 'Use global Tabs';
 $_lang["user"] = 'User';
 $_lang["user_block"] = 'Blocked';
 $_lang["user_blockedafter"] = 'Blocked After';
@@ -1215,10 +1228,13 @@ $_lang["pwd_hash_algo_message"] = 'Password hash algorithm.';
 $_lang["enable_bindings_title"] = 'Enable @Bindings commands';
 $_lang["enable_bindings_message"] = 'Prevents the execution of PHP functions through TV @Bindings. Useful if you have Manager users who should not be able to create PHP code but need to be able to create or edit TVs. The output of any TV with an @Binding will be "@Bindings disabled".';
 $_lang["enable_filter_title"] = 'Enable filters';
-$_lang["enable_filter_message"] = 'Filters allow you to manipulate the way data is presented or parsed in a tag. They allow you to modify values from inside your templates. This is analogous to PHx. <a href="https://github.com/modxcms/evolution/issues/623" target="ext_help">More info</a>'; // todo: change link to documentation 
+$_lang["enable_filter_message"] = 'Filters allow you to manipulate the way data is presented or parsed in a tag. They allow you to modify values from inside your templates. This is analogous to PHx. <a href="https://github.com/modxcms/evolution/issues/623" target="ext_help">More info</a>'; // todo: change link to documentation
 $_lang["enable_filter_phx_warning"] = 'When PHx plugin enabled, built-in filters are disabled by default';
 
 $_lang["enable_filter_phx_warning"] = 'When PHx plugin enabled, built-in filters are disabled by default';
+
+$_lang["enable_at_syntax_title"] = 'Enable &lt;@SYNTAX&gt;';
+$_lang["enable_at_syntax_message"] = '&lt;@SYNTAX&gt;(atmark syntax) is simple and lightweight template syntax. This is designed to consider coexistence with HTML tags and content strings.';
 
 $_lang["bkmgr_alert_mkdir"] = 'A file cannot be created in a directory.  Please check the permission of [+snapshot_path+]';
 $_lang["bkmgr_restore_msg"] = '<p>Database tables could be restored by SQL:</p>';
@@ -1370,7 +1386,7 @@ $_lang["position"] = "Position";
 $_lang["are_you_sure"] = "Are you sure?";
 
 $_lang['evo_downloads_title'] = "Evolution Downloads";
-$_lang['help_translating_title'] = "Help translating EVO Evolution";
+$_lang['help_translating_title'] = "Help translating Evolution";
 $_lang['download'] = "Download";
 $_lang['downloads'] = "Downloads";
 $_lang["previous_releases"] = "Previous Releases";

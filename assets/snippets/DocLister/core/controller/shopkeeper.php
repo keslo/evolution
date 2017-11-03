@@ -1,8 +1,4 @@
 <?php
-if (!defined('MODX_BASE_PATH')) {
-    die('HACK???');
-}
-
 /**
  * site_content controller
  * @see http://modx.im/blog/addons/374.html
@@ -204,10 +200,10 @@ class shopkeeperDocLister extends site_contentDocLister
                 $where = '';
             }
             $group = $this->getGroupSQL($this->getCFGDef('groupBy', 'c.id'));
-            $sort = $this->SortOrderSQL("c.createdon");
-            list($from) = $this->injectSortByTV($from, $sort);
+            $maxDocs = $this->getCFGDef('maxDocs', 0);
+            $limit = $maxDocs > 0 ? $this->LimitSQL($this->getCFGDef('maxDocs', 0)) : '';
 
-            $rs = $this->dbQuery("SELECT count(*) FROM (SELECT count(*) FROM {$from} {$where} {$group}) as `tmp`");
+            $rs = $this->dbQuery("SELECT count(*) FROM (SELECT count(*) FROM {$from} {$where} {$group} {$limit}) as `tmp`");
             $out = $this->modx->db->getValue($rs);
         }
 
@@ -260,9 +256,7 @@ class shopkeeperDocLister extends site_contentDocLister
 
             $rs = $this->dbQuery("SELECT {$fields} FROM {$tbl_site_content} {$where} {$group} {$sort} {$limit}");
 
-            $rows = $this->modx->db->makeArray($rs);
-
-            foreach ($rows as $item) {
+            while ($item = $this->modx->db->getRow($rs)) {
                 $out[$item['id']] = $item;
             }
         }
@@ -276,6 +270,7 @@ class shopkeeperDocLister extends site_contentDocLister
      */
     public function getChildrenFolder($id)
     {
+        $out = array();
         $where = $this->getCFGDef('addWhereFolder', '');
         $where = sqlHelper::trimLogicalOp($where);
         if ($where != '') {
@@ -293,9 +288,7 @@ class shopkeeperDocLister extends site_contentDocLister
         $rs = $this->dbQuery("SELECT id FROM {$tbl_site_content} {$where} AND c.id IN(SELECT DISTINCT s.parent FROM " . $this->getTable('catalog',
                 's') . ")");
 
-        $rows = $this->modx->db->makeArray($rs);
-        $out = array();
-        foreach ($rows as $item) {
+        while ($item = $this->modx->db->getRow($rs)) {
             $out[] = $item['id'];
         }
 
@@ -365,14 +358,13 @@ class shopkeeperDocLister extends site_contentDocLister
         $fields = $this->getCFGDef('selectFields', 'c.*');
         $group = $this->getGroupSQL($this->getCFGDef('groupBy', ''));
         if ($sanitarInIDs != "''" || $this->getCFGDef('ignoreEmpty', '0')) {
-            $sql = $this->dbQuery("SELECT {$fields} FROM " . $from . " " . $where . " " .
+            $rs = $this->dbQuery("SELECT {$fields} FROM " . $from . " " . $where . " " .
                 $group . " " .
                 $sort . " " .
                 $this->LimitSQL($this->getCFGDef('queryLimit', 0))
             );
 
-            $rows = $this->modx->db->makeArray($sql);
-            foreach ($rows as $item) {
+            while ($item = $this->modx->db->getRow($rs)) {
                 $out[$item['id']] = $item;
             }
         }

@@ -27,7 +27,7 @@ class MODIFIERS {
     function phxFilter($key,$value,$modifiers)
     {
         global $modx;
-        $value = $this->parseDocumentSource($value);
+        if(substr($modifiers,0,3)!=='id(') $value = $this->parseDocumentSource($value);
         $this->srcValue = $value;
         $modifiers = trim($modifiers);
         $modifiers = ':'.trim($modifiers,':');
@@ -50,8 +50,8 @@ class MODIFIERS {
         if(!in_array($c, array('"', "'", '`')) ) return false;
         
         $modifiers = substr($modifiers,1);
-        $clodure = $mode=='(' ? "{$c})" : $c;
-        if(strpos($modifiers, $clodure)===false) return false;
+        $closure = $mode=='(' ? "{$c})" : $c;
+        if(strpos($modifiers, $closure)===false) return false;
         
         return  $c;
     }
@@ -77,15 +77,15 @@ class MODIFIERS {
     function _getRemainModifiers($mode,$delim,$modifiers) {
         if($delim) {
             if($mode=='(')
-                return trim(substr($modifiers,strpos($modifiers, $delim . ')' )+2));
+                return $this->_fetchContent($modifiers, $delim . ')');
             else {
                 $modifiers = trim($modifiers);
                 $modifiers = substr($modifiers,1);
-                return substr($modifiers,strpos($modifiers, $delim)+1);
+                return $this->_fetchContent($modifiers, $delim);
             }
         }
         else {
-            if($mode=='(') return substr($modifiers,strpos($modifiers, ')' )+1);
+            if($mode=='(') return $this->_fetchContent($modifiers, ')');
             $chars = str_split($modifiers);
             foreach($chars as $c) {
                 if($c==':') return $modifiers;
@@ -94,6 +94,13 @@ class MODIFIERS {
             return $modifiers;
         }
     }
+    
+    function _fetchContent($string,$delim) {
+        $len = strlen($delim);
+        $string = $this->parseDocumentSource($string);
+        return substr($string,strpos($string, $delim)+$len);
+    }
+    
     function splitEachModifiers($modifiers) {
         global $modx;
         
@@ -104,7 +111,7 @@ class MODIFIERS {
             $c = substr($modifiers,0,1);
             $modifiers = substr($modifiers,1);
             
-            if(preg_match('@^:(!?[<>=]{1,2})@', $c.$modifiers, $match)) { // :=, :!=, :<=, :>=, :!<=, :!>=
+            if($c===':' && preg_match('@^(!?[<>=]{1,2})@', $modifiers, $match)) { // :=, :!=, :<=, :>=, :!<=, :!>=
                 $c = substr($modifiers,strlen($match[1]),1);
                 $debuginfo = "#i=0 #c=[{$c}] #m=[{$modifiers}]";
                 if($c==='(') $modifiers = substr($modifiers,strlen($match[1])+1);
@@ -115,6 +122,11 @@ class MODIFIERS {
                 $modifiers = trim($this->_getRemainModifiers($c,$delim,$modifiers));
                 
                 $result[]=array('cmd'=>trim($match[1]),'opt'=>$opt,'debuginfo'=>$debuginfo);
+                $cmd = '';
+            }
+            elseif(in_array($c,array('+','-','*','/')) && preg_match('@^[0-9]+@', $modifiers, $match)) { // :+3, :-3, :*3 ...
+                $modifiers = substr($modifiers,strlen($match[0]));
+                $result[]=array('cmd'=>'math','opt'=>'%s'.$c.$match[0]);
                 $cmd = '';
             }
             elseif($c==='(' || $c==='=') {
@@ -328,19 +340,17 @@ class MODIFIERS {
                 $this->condition[] = '&&';break;
             case 'show':
             case 'this':
-                $conditional = implode(' ',$this->condition);
+                $conditional = join(' ',$this->condition);
                 $isvalid = intval(eval("return ({$conditional});"));
                 if ($isvalid) return $this->srcValue;
-                else          return NULL;
-                break;
+                return NULL;
             case 'then':
-                $conditional = implode(' ',$this->condition);
+                $conditional = join(' ',$this->condition);
                 $isvalid = intval(eval("return ({$conditional});"));
                 if ($isvalid)  return $opt;
-                else           return NULL;
-                break;
+                return null;
             case 'else':
-                $conditional = implode(' ',$this->condition);
+                $conditional = join(' ',$this->condition);
                 $isvalid = intval(eval("return ({$conditional});"));
                 if (!$isvalid) return $opt;
                 break;
@@ -350,10 +360,11 @@ class MODIFIERS {
                 $map = array();
                 $c = count($raw);
                 for($m=0; $m<$c; $m++) {
-                    $mi = explode('=',$raw[$m]);
+                    $mi = explode('=',$raw[$m],2);
                     $map[$mi[0]] = $mi[1];
                 }
-                return $map[$value];
+                if(isset($map[$value])) return $map[$value];
+                else                    return '';
             ##### End of Conditional Modifiers
             
             #####  Encode / Decode / Hash / Escape
@@ -362,6 +373,7 @@ class MODIFIERS {
                 return htmlentities($value,ENT_QUOTES,$modx->config['modx_charset']);
             case 'html_entity_decode':
             case 'decode_html':
+            case 'html_decode':
                 return html_entity_decode($value,ENT_QUOTES,$modx->config['modx_charset']);
             case 'esc':
             case 'escape':
@@ -373,6 +385,7 @@ class MODIFIERS {
             case 'htmlspecialchars':
             case 'hsc':
             case 'encode_html':
+            case 'html_encode':
                 return preg_replace('/&amp;(#[0-9]+|[a-z]+);/i', '&$1;', htmlspecialchars($value, ENT_QUOTES, $modx->config['modx_charset']));
             case 'spam_protect':
                 return str_replace(array('@','.'),array('&#64;','&#46;'),$value);
@@ -399,8 +412,9 @@ class MODIFIERS {
                     $value = preg_replace('@(<br[ /]*>)\n@','$1',$value);
                     $value = preg_replace('@<br[ /]*>@',"\n",$value);
                 }
-                return strip_tags($value,$params);
+                return $this->strip_tags($value,$params);
             case 'urlencode':
+            case 'url_encode':
             case 'encode_url':
                 return urlencode($value);
             case 'base64_decode':
@@ -410,6 +424,7 @@ class MODIFIERS {
             case 'encode_sha1': $cmd = 'sha1';
             case 'addslashes':
             case 'urldecode':
+            case 'url_decode':
             case 'rawurlencode':
             case 'rawurldecode':
             case 'base64_encode':
@@ -530,7 +545,7 @@ class MODIFIERS {
                 break;
             case 'replace_to':
             case 'tpl':
-                if($value!=='') return str_replace(array('[+value+]','[+output+]','{value}'),$value,$opt);
+                if($value!=='') return str_replace(array('[+value+]','[+output+]','{value}','%s'),$value,$opt);
                 break;
             case 'eachtpl':
                 $value = explode('||',$value);
@@ -539,7 +554,11 @@ class MODIFIERS {
                     $_[] = str_replace(array('[+value+]','[+output+]','{value}','%s'),$v,$opt);
                 }
                 return join("\n", $_);
-                break;
+            case 'array_pop':
+            case 'array_shift':
+                if(strpos($value,'||')!==false) $delim = '||';
+                else                            $delim = ',';
+                return $cmd(explode($delim,$value));
             case 'preg_replace':
             case 'regex_replace':
                 if(empty($opt) || strpos($opt,',')===false) break;
@@ -631,7 +650,7 @@ class MODIFIERS {
             case 'calc':
                 $value = (int)$value;
                 if(empty($value)) $value = '0';
-                $filter = str_replace(array('[+value+]','%s'),'?',$opt);
+                $filter = str_replace(array('[+value+]','[+output+]','{value}','%s'),'?',$opt);
                 $filter = preg_replace('@([a-zA-Z\n\r\t\s])@','',$filter);
                 if(strpos($filter,'?')===false) $filter = "?{$filter}";
                 $filter = str_replace('?',$value,$filter);
@@ -725,13 +744,17 @@ class MODIFIERS {
                 $where = join(' AND ', $where);
                 $children = $modx->getDocumentChildren($value, $published, '0', 'id', $where);
                 $result = array();
-                foreach((array)$children as $child){ // $children が null だった時にエラーになるため型キャスト
+                foreach((array)$children as $child){
                     $result[] = $child['id'];
                 }
                 return join(',', $result);
             case 'fullurl':
                 if(!is_numeric($value)) return $value;
                 return $modx->makeUrl($value);
+            case 'makeurl':
+                if(!is_numeric($value)) return $value;
+                if(!$opt) $opt = 'full';
+                return $modx->makeUrl($value,'','',$opt);
                 
             #####  File system
             case 'getimageinfo':
@@ -784,12 +807,11 @@ class MODIFIERS {
                 $filename = MODX_BASE_PATH.$opt.$filename;
                 
                 if(is_file($filename)){
-                    $size = filesize($filename);
                     clearstatcache();
+                    $size = filesize($filename);
                     return $size;
                 }
                 else return '';
-                break;
             #####  User info
             case 'username':
             case 'fullname':
@@ -896,7 +918,6 @@ class MODIFIERS {
             // If we haven't yet found the modifier, let's look elsewhere
             default:
                 $value = $this->getValueFromElement($key, $value, $cmd, $opt);
-                break;
         }
         return $value;
     }
@@ -1107,14 +1128,26 @@ class MODIFIERS {
     }
     function strrev($str) {
         preg_match_all('/./us', $str, $ar);
-        return implode(array_reverse($ar[0]));
+        return join(array_reverse($ar[0]));
     }
     function str_shuffle($str) {
         preg_match_all('/./us', $str, $ar);
         shuffle($ar[0]);
-        return implode($ar[0]);
+        return join($ar[0]);
     }
     function str_word_count($str) {
         return count(preg_split('~[^\p{L}\p{N}\']+~u',$str));
+    }
+    function strip_tags($value,$params='') {
+        global $modx;
+
+        if(stripos($params,'style')===false && stripos($value,'</style>')!==false) {
+            $value = preg_replace('@<style.*?>.*?</style>@is', '', $value);
+        }
+        if(stripos($params,'script')===false && stripos($value,'</script>')!==false) {
+            $value = preg_replace('@<script.*?>.*?</script>@is', '', $value);        
+        }
+  
+        return trim(strip_tags($value,$params));
     }
 }
